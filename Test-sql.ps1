@@ -6,7 +6,7 @@ $sqlServerFile = ".\SQLServer_Admin_List_$td.csv"
 $subscriptionList = Get-AzSubscription
 
 foreach ($subscription in $subscriptionList) {
-    Write-Host "Controllando: $($subscription.name)"
+    Write-Host "Sub: $($subscription.name)" -ForegroundColor Yellow
     Set-AzContext $subscription.subscriptionId | Out-Null
     $rg = Get-AzResourceGroup
     $rgCount = $rg.Count
@@ -14,10 +14,10 @@ foreach ($subscription in $subscriptionList) {
 
     foreach ($resourcegroup in $rg) {
         
-        Write-Host "RG $($index) di $($rgCount)"
+        Write-Host "RG: $($index) / $($rgCount)" -ForegroundColor Blue
         $SQLServers = Get-AzSqlServer -ResourceGroup $resourcegroup.ResourceGroupName
         $index++
-        Write-Host "SQL Server presenti nel Resource group $($resourcegroup.ResourceGroupName): $($SQLServers.Count)"	
+        Write-Host "SQL Server in $($resourcegroup.ResourceGroupName): $($SQLServers.Count)" -ForegroundColor Blue	
     
         if ($SQLServers.Count -eq 0) {
             continue
@@ -29,24 +29,21 @@ foreach ($subscription in $subscriptionList) {
             $publicNetworkAccess = $false
 
             foreach ($rule in $firewallRules) {
-                if ($rule -eq $null) {
-                    $publicNetworkAccess = $false
-                    break
-                }
-                else {
+                if ($rule.FirewallRuleName -eq "AllowAllWindowsAzureIps") {
                     $publicNetworkAccess = $true
+                    break
                 }
             }
     
             if ($publicNetworkAccess) {
-                Write-Host "Opzione 'Public network access' disabilitata"
+                Write-Host "Allow azure services su $($sqlServer.ServerName) abilitata" -ForegroundColor Red
             }
             else {
-                Write-Host "Opzione 'Public network access' abilitata"
+                Write-Host "Allow azure services su $($sqlServer.ServerName) disabilitata" -ForegroundColor Green
             }
 
-
-            $sqlServer | Add-Member -MemberType NoteProperty -Name 'publicNetworkAccess' -Value $publicNetworkAccess -Force
+            $sqlServer | Add-Member -MemberType NoteProperty -Name 'SubscriptionName' -Value $subscription.Name -Force
+            $sqlServer | Add-Member -MemberType NoteProperty -Name 'AllowAzureServices' -Value $publicNetworkAccess -Force
             $sqlServer  | export-csv -Path $sqlServerFile  -NoTypeInformation -Append  
         }
 
