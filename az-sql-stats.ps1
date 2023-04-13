@@ -2,7 +2,7 @@ $ts = Get-Date
 
 # File di output
 $td = Get-Date -Format "yyyy.MM.dd_HH.mm"
-$sqlServerFile = ".\SQLServer_Admin_List_$td.csv"
+$sqlServerFile = ".\az-sql-stats.csv_$td.csv"
 $subscriptionList = Get-AzSubscription
 
 foreach ($subscription in $subscriptionList) {
